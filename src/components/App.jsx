@@ -1,28 +1,34 @@
 import { fetchImages } from 'fetchImages';
 import { Component } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Container } from './App.styled';
+import Button from './Button';
 import ImageGallery from './ImageGallery';
 import SearchBar from './SearchBar';
 
 export class App extends Component {
   state = {
     searchText: '',
-    total: 0,
+    totalPages: 0,
+    page: 1,
     images: [],
     error: null,
   };
 
   async componentDidUpdate(_, prevState) {
-    if (prevState.searchText !== this.state.searchText) {
-      await fetchImages(this.state.searchText)
-        .then(response => {
-          if (response.ok) {
-            return response.json();
-          }
-
-          return Promise.reject(new Error('Something went wrong :('));
+    if (
+      prevState.searchText !== this.state.searchText ||
+      prevState.page !== this.state.page
+    ) {
+      await fetchImages(this.state.searchText, this.state.page)
+        .then(({ totalHits, hits: images }) => {
+          const totalPages = Math.ceil(totalHits / 12);
+          this.setState({
+            images: [...prevState.images, ...images],
+            totalPages,
+          });
         })
-        .then(({ hits: images }) => this.setState({ images }))
         .catch(error => {
           this.setState({ error: error.message });
         });
@@ -31,19 +37,33 @@ export class App extends Component {
 
   onSubmit = searchText => {
     if (!searchText.trim()) {
-      alert('Incorrect request');
+      toast.error('Incorrect request');
+      return;
     }
 
-    this.setState({ searchText });
+    this.setState({ searchText, page: 1 });
+  };
+
+  onLoadMore = event => {
+    event.preventDefault();
+    this.setState(({ page }) => {
+      return {
+        page: page + 1,
+      };
+    });
   };
 
   render() {
-    const { images } = this.state;
+    const { images, page, totalPages } = this.state;
 
     return (
       <Container>
         <SearchBar onSubmit={this.onSubmit} />
         <ImageGallery images={images} />
+        {totalPages > 1 && page < totalPages && (
+          <Button onClick={this.onLoadMore} />
+        )}
+        <ToastContainer />
       </Container>
     );
   }
