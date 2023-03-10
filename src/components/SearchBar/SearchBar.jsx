@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { BiSearch } from 'react-icons/bi';
 import {
   FormInput,
@@ -9,6 +10,10 @@ import {
 } from './SearchBar.styled';
 
 export default class SearchBar extends Component {
+  static propTypes = {
+    onSubmit: PropTypes.func.isRequired,
+  };
+
   state = {
     search: '',
   };
