@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Container } from './App.styled';
 import Button from './Button';
 import ImageGallery from './ImageGallery';
+import Loader from './Loader';
 import SearchBar from './SearchBar';
 
 export class App extends Component {
@@ -14,6 +15,7 @@ export class App extends Component {
     page: 1,
     images: [],
     error: null,
+    status: 'idle',
   };
 
   async componentDidUpdate(_, prevState) {
@@ -21,16 +23,19 @@ export class App extends Component {
       prevState.searchText !== this.state.searchText ||
       prevState.page !== this.state.page
     ) {
+      this.setState({ status: 'pending' });
+
       await fetchImages(this.state.searchText, this.state.page)
         .then(({ totalHits, hits: images }) => {
           const totalPages = Math.ceil(totalHits / 12);
           this.setState({
             images: [...prevState.images, ...images],
             totalPages,
+            status: 'resolved',
           });
         })
         .catch(error => {
-          this.setState({ error: error.message });
+          this.setState({ error: error.message, status: 'rejected' });
         });
     }
   }
@@ -54,15 +59,22 @@ export class App extends Component {
   };
 
   render() {
-    const { images, page, totalPages } = this.state;
+    const { images, page, totalPages, status, error } = this.state;
 
     return (
       <Container>
         <SearchBar onSubmit={this.onSubmit} />
+
+        {status === 'rejected' && <p>{error}</p>}
+
         <ImageGallery images={images} />
+
+        {status === 'pending' && <Loader />}
+
         {totalPages > 1 && page < totalPages && (
           <Button onClick={this.onLoadMore} />
         )}
+
         <ToastContainer />
       </Container>
     );
