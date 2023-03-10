@@ -27,10 +27,17 @@ export class App extends Component {
 
       await fetchImages(this.state.searchText, this.state.page)
         .then(({ totalHits, hits: images }) => {
-          const totalPages = Math.ceil(totalHits / 12);
+          if (prevState.searchText !== this.state.searchText) {
+            const totalPages = Math.ceil(totalHits / 12);
+            return this.setState({
+              images,
+              totalPages,
+              status: 'resolved',
+            });
+          }
+
           this.setState({
             images: [...prevState.images, ...images],
-            totalPages,
             status: 'resolved',
           });
         })
@@ -46,7 +53,7 @@ export class App extends Component {
       return;
     }
 
-    this.setState({ searchText, page: 1 });
+    this.setState({ searchText, images: [], page: 1 });
   };
 
   onLoadMore = event => {
