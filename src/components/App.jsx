@@ -57,7 +57,6 @@ export class App extends Component {
   };
 
   onLoadMore = event => {
-    event.preventDefault();
     this.setState(({ page }) => {
       return {
         page: page + 1,
